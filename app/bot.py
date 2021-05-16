@@ -24,7 +24,7 @@ bot.owner = "@abhi3700"
 # define Redis database
 # r = redis.from_url(REDIS_URL)
 
-# ===================================================func for withdraw & withdrawmemo ACTION========================================================
+# ===================================================func for addmodkyc ACTION========================================================
 async def addmodkyc(
 		from_id,
 		from_username,
@@ -79,62 +79,7 @@ async def addmodkyc(
 	'''
 	chat.send(f"\nView the transaction here: https://bloks.io/transaction/{response[20:84]}") if chain_type== "eos-mainnet" else chat.send(f"\nView the transaction here: https://{chain_name}.bloks.io/transaction/{response[20:84]}")          # print the txn_id for successful transaction
 
-# ===================================================func for tip ACTION===================================================================
-async def tip(
-		from_id,
-		to_id,
-		from_username,
-		to_username,
-		quantity,
-		memo,
-		chat
-	):
-	contract_account = EosAccount(
-	  name=tip_eosio_ac,
-	  private_key=tip_ac_private_key
-	)
-
-	action = types.EosAction(
-		account=tip_eosio_ac,
-		name=tip_action,
-		authorization=[contract_account.authorization(tip_ac_key_perm)],
-		data={
-			'from_id': from_id,
-			'to_id': to_id,
-			'from_username': from_username,
-			'to_username': to_username,
-			'quantity': quantity,
-			'memo': memo
-		}
-	)
-
-	rpc = EosJsonRpc(url=Chain_URL)
-	block = await rpc.get_head_block()
-
-	transaction = EosTransaction(
-	  ref_block_num=block['block_num'] & 65535,
-	  ref_block_prefix=block['ref_block_prefix'],
-	  actions=[action]
-	)
-
-	response = await rpc.sign_and_push_transaction(
-	  transaction, keys=[contract_account.key]
-	)
-	# chat.send(f'{response}')             # print the full response after SUCCESS
-	
-	response = str(response).replace("\'", "\"")            # replace single quotes (') with double quotes (") to make it as valid JSON & then extract the 'message' value.
-	# print(response)               # print the full response after replacing single with double quotes
-	'''
-		Here, as the response o/p is not a valid JSON giving error like this:
-		Error:
-			Parse error on line 1:
-			...producer_block_id": None, "receipt": {"s
-			-----------------------^
-			Expecting 'STRING', 'NUMBER', 'NULL', 'TRUE', 'FALSE', '{', '[', got 'undefined'
-
-		So, capture txn_id by char no. i.e. {"transaction_id": "14e310c6e296560202ec808139d7e1b06901616f35b5c4a36ee0a4f065ec72a6"
-	'''
-	chat.send(f"\nView the transaction here: https://bloks.io/transaction/{response[20:84]}") if chain_type== "eos-mainnet" else chat.send(f"\nView the transaction here: https://{chain_name}.bloks.io/transaction/{response[20:84]}")          # print the txn_id for successful transaction
+# ===================================================func for delkyc ACTION===================================================================
 
 
 
@@ -178,9 +123,9 @@ def addkyc_command(chat, message, args):
 
 	btns[0].callback("Name", "kyc_name")     						# button - Name
 	btns[0].callback("Address", "kyc_address")     					# button - Address
-	btns[1].callback("Document front photo", "kyc_docfrontpic")     # button - Document front photo
-	btns[2].callback("Document back photos", "kyc_docbackpic")     	# button - Document back photo
-	btns[3].callback("Selfie", "kyc_selfie") 					   	# button - Selfie
+	btns[1].callback("Document front image", "kyc_docfrontimg")     # button - Document front photo
+	btns[2].callback("Document back image", "kyc_docbackimg")     	# button - Document back photo
+	btns[3].callback("Selfie image", "kyc_selfie") 					   	# button - Selfie
 
 	chat.send("Please, select one option to add KYC", attach= btns)
 
@@ -202,6 +147,17 @@ def kyc_address_callback(query, chat, message):
     chat.send("kycaddr 1504 Liberty St.\nNew York, NY\n10004 USA")
 
 @bot.message_contains("kycaddr")
+def save_kycaddress(chat, message):
+	address = message.text.replace("kycaddr", "")
+	message.reply(f'{address} \nsaved.')
+
+# ---------------------------------------------------callback: kyc_docfrontimg------------------------------------------------------------------------------
+@bot.callback("kyc_docfrontimg")
+def kyc_docfrontimg_callback(query, chat, message):
+    chat.send("Please, send your document address. E.g.")
+    chat.send("kycaddr 1504 Liberty St.\nNew York, NY\n10004 USA")
+
+@bot.message_contains("kycdocf")
 def save_kycaddress(chat, message):
 	address = message.text.replace("kycaddr", "")
 	message.reply(f'{address} \nsaved.')
