@@ -1,5 +1,7 @@
 """
-    This file - `db.py` is to check the database data.
+	This file - `db.py` is to check the database data.
+
+	Reference: https://devcenter.heroku.com/articles/heroku-redis#connecting-in-python
 """
 
 import redis
@@ -10,7 +12,65 @@ from input import REDIS_URL
 
 # ---------------------------------------------------------------
 # define Redis database
-r = redis.from_url(REDIS_URL)
+r = redis.from_url(REDIS_URL, ssl_cert_reqs=None)		# ssl_verify to false
+
+# ---------------set input-----------------------------------------
+
+kyc_data_232532532 = {
+		"name": "Ramesh Sisodia",
+		# "name_txns": [],
+		"address": "490, first floor, \nSector 98, Mohali, \nPunjab-160098",
+		# "address_txns": [],
+		"document_photo_front_url": "",
+		# "document_photo_front_url_txns": [],
+		"document_photo_back_url": "",
+		# "document_photo_back_url_txns": [],
+		"selfie_photo_url": "",
+		# "selfie_photo_url_txns": [],
+		# "all_txns": ["4d2ba4b35c0d5fce9b8337668daf64d69bf8bd3fbfcabcae06133bda4b682553", "c3e086726d8d88441a5564e394f28729999d6ff8a28f3f75cb5ebbe4197bb378"],
+	}
+
+# ----------------Set all params----------------------------
+# # # set all the params at once		TODO
+# # r.hset('232532532', json.loads(kyc_data_232532532))
+# # r.hset('232532532', str(kyc_data_232532532))
+# # r.hset('232532532', kyc_data_232532532.encode('utf-8'))
+
+# # r.hmset("232532532", kyc_data_232532532)				# [DEPRECATED]
+
+# # ----------------Set individual params-----------------------------------
+# # set 'name' of user_id - 232532532 
+# # r.hset("232532532", "name", "Ramesh Sisodia")
+# # get 'name' of user_id - 232532532
+# print(r.hget('232532532', 'name').decode('utf-8')) 			# Ramesh Sisodia
+
+
+# # set 'address' of user_id - 232532532 
+# r.hset("232532532", "address", "490, first floor, \nSector 98, Mohali, \nPunjab-160098")
+# # get 'address' of user_id - 232532532
+# print(r.hget('232532532', 'address').decode('utf-8')) 			# Ramesh Sisodia
+
+# # ---------------display-------------------------------------------
+# print(r.keys())			# get all the user_ids
+
+# print(r.hexists('232532532', 'name'))
+
+# r.delete('232532532')
+
+print(r.keys())
+# -------------M-2-------------------
+'''
+
+
+'''
+# # get the kyc info of user_id - 232532532
+# # type - string
+# # print(r.hget("232532532", "kyc").decode('utf-8'))
+
+# # a. convert from string to dictionary
+# # b. get the value of 'name' param of user_id - 232532532
+# print(json.loads(r.hget("232532532", "kyc").decode('utf-8'))["name"])
+
 
 # ----------------------------------------------------------------
 # phoneno = "8143243443"
@@ -86,18 +146,18 @@ r = redis.from_url(REDIS_URL)
 # print(key_phone)
 # if key_phone == "":
 #     print("Username doesn't exist")
-    # try:
-    #     key_nested2 = list(dict_nested2_val2.keys())[list(dict_nested2_val2.values()).index('abhi3701')]       # get the key corresponding to value - 'India'
-    # except ValueError:      # ignore this exception error when item not found
-    #     pass
+	# try:
+	#     key_nested2 = list(dict_nested2_val2.keys())[list(dict_nested2_val2.values()).index('abhi3701')]       # get the key corresponding to value - 'India'
+	# except ValueError:      # ignore this exception error when item not found
+	#     pass
 
-print(r.keys())
+# print(r.keys())
 
 # delete all stored keys
 # for k in r.keys():
 #     r.delete(k)
 
-for k in r.keys():
-    k_decoded = k.decode('utf-8')
-    # print(json.loads(r.hget(k_decoded, "product_a").decode('utf-8')))
-    print(json.loads(r.hget(k_decoded, "info").decode('utf-8')))
+# for k in r.keys():
+#     k_decoded = k.decode('utf-8')
+#     # print(json.loads(r.hget(k_decoded, "product_a").decode('utf-8')))
+#     print(json.loads(r.hget(k_decoded, "info").decode('utf-8')))
