@@ -19,7 +19,7 @@ from input import *
 
 # --------------------About Bot--------------------------------------------------------------------
 bot = botogram.create(API_key)
-bot.about = "This is a Tip Bot."
+bot.about = "This is a KYC Bot."
 bot.owner = "@abhi3700"
 
 # --------------------Redis DB------------------------------------------------------------------------
@@ -164,7 +164,10 @@ async def delkyc(
 
 # ===========================command: /showkycinfo===========================================================================
 @bot.command("showkycinfo")
-def getkycinfo_command(chat, message, args):
+def showkycinfo_command(chat, message, args):
+	'''
+		Show user's updated KYC info 
+	'''
 	name = address = doc_frontf_url = doc_backf_url = selfie_url = ''		# initialize all at a time
 	try:
 		chat.send('Please wait...')
@@ -198,7 +201,7 @@ def getipfsurl_command(chat, message, args):
 @bot.command("addmodkyc")
 def addmodkyc_command(chat, message, args):
 	"""
-		Add KYC to this bot via Blockchain by pressing one of the buttons
+		Add/Modify KYC to this bot via Blockchain
 	"""
 	btns = botogram.Buttons()
 
@@ -309,16 +312,42 @@ def save_kyc_address(chat, message):
 @bot.callback("kyc_docfrontimg")
 def kyc_docfrontimg_callback(query, chat, message):
 	chat.send("Please, send your document front image. E.g.")
-	chat.send("kycdocf https://bafybeif7o6gbojzob7tjl3g74425nb54v5als6rx7e4ytadwrtq3vcpr7u.ipfs.dweb.link/")
-	chat.send("To get IPFS url for any image uploaded to IPFS, use this command - /getipfsurl")
+	chat.send_photo(url="https://bafybeif7o6gbojzob7tjl3g74425nb54v5als6rx7e4ytadwrtq3vcpr7u.ipfs.dweb.link/",
+					caption= "kycdocf"
+					)
+	# chat.send("To get IPFS url for any image uploaded to IPFS, use this command - /getipfsurl")
 
 @bot.message_contains("kycdocf")
 def save_kyc_docfrontimg(chat, message):
 	# address = message.text.replace("kycdocf", "")
-	photo = message.photo
-	# save_path = 
-	# photo.save()
-	message.reply(f'{photo.file_id} \nsaved.')
+
+	# updates = bot.api.call("getUpdates", {"chat_id": chat.id, "user_id": message.sender.id})
+	updates = bot.api.call("getUpdates")
+	if updates["ok"] == True:
+		chat.send("OK")
+		chat.send(f'{type(updates)}')
+		txt_msgs = updates["result"].reverse()
+		txt_msg = txt_msgs[0]["message"]["text"]
+		chat.send(f"{type(txt_msgs)}")
+		chat.send(f"{len(txt_msgs)}")
+		chat.send(f"{txt_msg}")
+	else:
+		chat.send("Problem connecting to the Bot server.")
+
+	# chat.send(f"{message.id}")
+	# message.reply(f'{message.id}')
+	# message.reply('{file_id} \nsaved.'.format(file_id=str(photo2.file_id)), reply_to = message.id)
+
+
+
+# @bot.message_contains("kycdocf")
+# def demo(chat, message):
+#     status = bot.api.call("getMessages", {"chat_id": chat.id, "user_id": message.sender.id});
+
+# 	if status == "OK":
+# 	else:
+# 		chat.send("Connection error.")
+
 
 # ---------------------------callback: kyc_docbackimg------------------------------------------------------------------------------
 @bot.callback("kyc_docbackimg")
@@ -361,7 +390,7 @@ args[0] to args[-1]
 @bot.command("delkyc")
 def delkyc_command(chat, message, args):
 	"""
-		Delete KYC from this bot via Blockchain
+		Delete user's KYC info from this bot via Blockchain
 	"""
 	try:				# for Blockchain
 		# push txn
