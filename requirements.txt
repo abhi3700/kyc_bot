@@ -1,6 +1,5 @@
 botogram2
 asyncio
 aioeos
-time
 redis
 pycryptodome
