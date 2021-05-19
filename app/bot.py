@@ -321,23 +321,39 @@ def kyc_docfrontimg_callback(query, chat, message):
 def save_kyc_docfrontimg(chat, message):
 	# address = message.text.replace("kycdocf", "")
 
+	message.reply(f"{message.caption}")
+	message.reply(f"{message.id}, {message.sender.name}, {message.date}, {message.chat.id} + {message.chat.username}")
+	photo_file = message.photo
+	message.reply(f"{type(photo_file)}")
+	# photo_file.download('kycdocf_photo.jpg')
+	# message.reply(f"{message.photo[-1].get_file()}")
+
 	# updates = bot.api.call("getUpdates", {"chat_id": chat.id, "user_id": message.sender.id})
-	updates = bot.api.call("getUpdates")
-	if updates["ok"] == True:
-		chat.send("OK")
-		chat.send(f'{type(updates)}')
-		txt_msgs = updates["result"].reverse()
-		txt_msg = txt_msgs[0]["message"]["text"]
-		chat.send(f"{type(txt_msgs)}")
-		chat.send(f"{len(txt_msgs)}")
-		chat.send(f"{txt_msg}")
-	else:
-		chat.send("Problem connecting to the Bot server.")
+	# updates = bot.api.call("getUpdates")
+	# if updates["ok"] == True:
+	# 	chat.send("OK")
+	# 	chat.send(f'{type(updates)}')
+	# 	txt_msgs = updates["result"].reverse()
+	# 	chat.send(f"{len(txt_msgs)}")
+	# 	txt_msg = txt_msgs[0]["message"]["text"]
+	# 	chat.send(f"{type(txt_msgs)}")
+	# 	chat.send(f"{txt_msg}")
+	# 	message.reply(f'{message.id}')
+
+	# else:
+	# 	chat.send("Problem connecting to the Bot server.")
 
 	# chat.send(f"{message.id}")
 	# message.reply(f'{message.id}')
 	# message.reply('{file_id} \nsaved.'.format(file_id=str(photo2.file_id)), reply_to = message.id)
 
+# @bot.message_matches("kycdocf")
+# def save_kyc_docfrontimg(chat, message):
+# 	# address = message.text.replace("kycdocf", "")
+
+# 	message.reply(f"{message.caption}")
+# 	message.reply(f"{message.id}, {message.sender.name}, {message.date}, {message.chat.id} + {message.chat.username}")
+# 	message.reply(f"{message.photo}")
 
 
 # @bot.message_contains("kycdocf")
@@ -346,7 +362,7 @@ def save_kyc_docfrontimg(chat, message):
 
 # 	if status == "OK":
 # 	else:
-# 		chat.send("Connection error.")
+# 		chat.send("Connection error.")	
 
 
 # ---------------------------callback: kyc_docbackimg------------------------------------------------------------------------------
