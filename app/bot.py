@@ -330,6 +330,20 @@ def save_kyc_docfrontimg(chat, message):
 
 	# updates = bot.api.call("getUpdates", {"chat_id": chat.id, "user_id": message.sender.id})
 	# updates = bot.api.call("getUpdates")
+	# TODO: use the url: "https://"
+	updates_res = requests.get('http://api.telegram.org/bot{API_key}/{method}'.format(API_key=API_key, method= 'getUpdates'), verify= False)
+	# updates_res = requests.get('http://api.telegram.org:443/bot{API_key}/{method}'.format(API_key=API_key, method= 'getUpdates'), verify= False)
+
+	# update.content						# response (in bytes)	
+	# update.text							# response (in string)
+	# update_res.json()					# response (in JSON format)
+	
+	if updates_res.status_code == 200:			# status OK
+		chat.send('Bot is successfully connected!')
+		chat.send("{update.text}")
+	else:
+		chat.send("Problem connecting to the Bot server.")
+
 	# if updates["ok"] == True:
 	# 	chat.send("OK")
 	# 	chat.send(f'{type(updates)}')
@@ -354,15 +368,6 @@ def save_kyc_docfrontimg(chat, message):
 # 	message.reply(f"{message.caption}")
 # 	message.reply(f"{message.id}, {message.sender.name}, {message.date}, {message.chat.id} + {message.chat.username}")
 # 	message.reply(f"{message.photo}")
-
-
-# @bot.message_contains("kycdocf")
-# def demo(chat, message):
-#     status = bot.api.call("getMessages", {"chat_id": chat.id, "user_id": message.sender.id});
-
-# 	if status == "OK":
-# 	else:
-# 		chat.send("Connection error.")	
 
 
 # ---------------------------callback: kyc_docbackimg------------------------------------------------------------------------------
