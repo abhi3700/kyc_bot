@@ -50,6 +50,11 @@ kyc_data_232532532 = {
 # # get 'address' of user_id - 232532532
 # print(r.hget('232532532', 'address').decode('utf-8')) 			# Ramesh Sisodia
 
+
+# upload img to redis
+# r =  redis.StrictRedis()
+# img = open("/path/to/img.jpeg","rb").read()
+# r.set("bild1",img)
 # # ---------------display-------------------------------------------
 # print(r.keys())			# get all the user_ids
 

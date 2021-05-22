@@ -4,6 +4,7 @@ import json
 import asyncio
 import time
 from Crypto.Hash import SHA256
+import requests
 
 from aioeos import EosAccount, EosJsonRpc, EosTransaction
 from aioeos import types
@@ -224,7 +225,7 @@ def save_kyc_name(chat, message):
 	name = message.text.replace("kycname", "")
 	try:				# for Blockchain
 		# push txn
-		chat.send('Validating on EOS Blockchain...')
+		chat.send('Validating on EOSIO Blockchain...')
 		asyncio.get_event_loop().run_until_complete(addmodkyc(chat.id, name, "", "", "", "", chat))
 		
 		try:			# for Redis DB
@@ -242,6 +243,21 @@ def save_kyc_name(chat, message):
 
 		except redis.exceptions.ConnectionError as e:
 			chat.send(f'Redis Database Connection Error')
+	
+	except EosRpcException as e:
+		e = str(e).replace("\'", "\"")
+		# what_idx = e.find('what')
+		exp_idx = e.find('Invalid name')
+		# if what_idx != -1 and name_idx != -1:
+		if exp_idx != -1:
+			# print(e[exp_idx:(exp_idx+12)])
+			chat.send(f'Your EOSIO account name doesn\'t exist on this chain.')
+		else:
+			# print("Some other Exception occured. Please contact the Bot owner {bot.owner}.")
+			chat.send("Some other Exception occured. Please contact the Bot owner {bot.owner}.")
+
+		# chat.send(f"Assertion Error msg --> {json.loads(str(e))['what']}")          # print the message
+		# chat.send(f"Assertion Error msg -->{str(e)}")          # print the message
 
 	except EosAccountDoesntExistException:
 		chat.send(f'Your EOSIO account doesn\'t exist on this chain.')
@@ -274,7 +290,7 @@ def save_kyc_address(chat, message):
 	
 	try:				# for Blockchain
 		# push txn
-		chat.send('Validating on EOS Blockchain...')
+		chat.send('Validating on EOSIO Blockchain...')
 		asyncio.get_event_loop().run_until_complete(addmodkyc(chat.id, "", address_hash, "", "", "", chat))
 		
 		try:			# for Redis DB
@@ -293,6 +309,20 @@ def save_kyc_address(chat, message):
 		except redis.exceptions.ConnectionError as e:
 			chat.send(f'Redis Database Connection Error')
 
+	except EosRpcException as e:
+		e = str(e).replace("\'", "\"")
+		# what_idx = e.find('what')
+		exp_idx = e.find('Invalid name')
+		# if what_idx != -1 and name_idx != -1:
+		if exp_idx != -1:
+			# print(e[exp_idx:(exp_idx+12)])
+			chat.send(f'Your EOSIO account name doesn\'t exist on this chain.')
+		else:
+			# print("Some other Exception occured. Please contact the Bot owner {bot.owner}.")
+			chat.send("Some other Exception occured. Please contact the Bot owner {bot.owner}.")
+
+		# chat.send(f"Assertion Error msg --> {json.loads(str(e))['what']}")          # print the message
+		# chat.send(f"Assertion Error msg -->{str(e)}")          # print the message
 	except EosAccountDoesntExistException:
 		chat.send(f'Your EOSIO account doesn\'t exist on this chain.')
 	except EosAssertMessageException as e:
@@ -331,8 +361,8 @@ def save_kyc_docfrontimg(chat, message):
 	# updates = bot.api.call("getUpdates", {"chat_id": chat.id, "user_id": message.sender.id})
 	# updates = bot.api.call("getUpdates")
 	# TODO: use the url: "https://"
-	updates_res = requests.get('http://api.telegram.org/bot{API_key}/{method}'.format(API_key=API_key, method= 'getUpdates'), verify= False)
-	# updates_res = requests.get('http://api.telegram.org:443/bot{API_key}/{method}'.format(API_key=API_key, method= 'getUpdates'), verify= False)
+	updates_res = requests.get('https://api.telegram.org/bot{API_key}/{method}'.format(API_key=API_key, method= 'getUpdates'))
+	# updates_res = requests.get('https://api.telegram.org:443/bot{API_key}/{method}'.format(API_key=API_key, method= 'getUpdates'))
 
 	# update.content						# response (in bytes)	
 	# update.text							# response (in string)
@@ -340,7 +370,10 @@ def save_kyc_docfrontimg(chat, message):
 	
 	if updates_res.status_code == 200:			# status OK
 		chat.send('Bot is successfully connected!')
-		chat.send("{update.text}")
+
+		txt = updates_res.text
+		chat.send(f"{txt}")
+		chat.send(f'{message.photo}')
 	else:
 		chat.send("Problem connecting to the Bot server.")
 
@@ -415,7 +448,7 @@ def delkyc_command(chat, message, args):
 	"""
 	try:				# for Blockchain
 		# push txn
-		chat.send('Validating on EOS Blockchain...')
+		chat.send('Validating on EOSIO Blockchain...')
 		asyncio.get_event_loop().run_until_complete(delkyc(chat.id, chat))
 		
 		try:			# for Redis DB
