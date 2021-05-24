@@ -49,6 +49,7 @@ kyc_data_232532532 = {
 # r.hset("232532532", "address", "490, first floor, \nSector 98, Mohali, \nPunjab-160098")
 # # get 'address' of user_id - 232532532
 # print(r.hget('232532532', 'address').decode('utf-8')) 			# Ramesh Sisodia
+print(r.hget('410894301', 'address').decode('utf-8')) 			# Ramesh Sisodia
 
 
 # upload img to redis
