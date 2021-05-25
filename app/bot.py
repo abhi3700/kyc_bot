@@ -161,10 +161,10 @@ def showkycinfo_command(message):
 
 		bot.send_message(message.chat.id, f"<u><b>Your updated KYC info is shown here: </b></u> \n\n- <u>Name:</u> {name} \n- <u>Address</u>: {address}", parse_mode= 'HTML')
 
-		if r.hexists(str(message.chat.id), 'kycdocf') == True:
+		if r.hexists(str(message.chat.id), 'docfront') == True:
 			# check if the value is not empty (in bytes)
-			if r.hget(str(message.chat.id), 'kycdocf') != b'':
-				img_data = r.hget(str(message.chat.id), 'kycdocf')			# get the 'base64' encoded image data
+			if r.hget(str(message.chat.id), 'docfront') != b'':
+				img_data = r.hget(str(message.chat.id), 'docfront')			# get the 'base64' encoded image data
 				with open(f"img_showf_{message.chat.id}.jpg", "wb") as fh:
 					# decode the image as 'base64' encoding type & then write
 					fh.write(base64.b64decode(img_data))			
@@ -176,10 +176,10 @@ def showkycinfo_command(message):
 		else:
 			bot.send_message(message.chat.id, "Sorry! No <u>Document front</u> photo available.", parse_mode='HTML')
 
-		if r.hexists(str(message.chat.id), 'kycdocb') == True:
+		if r.hexists(str(message.chat.id), 'docback') == True:
 			# check if the value is not empty (in bytes)
-			if r.hget(str(message.chat.id), 'kycdocb') != b'':
-				img_data = r.hget(str(message.chat.id), 'kycdocb')			# get the 'base64' encoded image data
+			if r.hget(str(message.chat.id), 'docback') != b'':
+				img_data = r.hget(str(message.chat.id), 'docback')			# get the 'base64' encoded image data
 				with open(f"img_showb_{message.chat.id}.jpg", "wb") as fh:
 					# decode the image as 'base64' encoding type & then write
 					fh.write(base64.b64decode(img_data))			
@@ -331,77 +331,6 @@ def handle_text(message):
 	else:
 		bot.reply_to(message, "Not sure, what do you mean. \nPlease follow up with /help command.")
 
-# @bot.message_handler(content_types=['text'])
-# def save_kyc_address(message):
-# 	bot.send_message(message.chat.id, "hello")
-# 	if message.text.__contains__("kycaddr"):
-# 		bot.send_message(message.chat.id, "found")
-# 		# "kycaddr Ramesh Kumar" --> "Ramesh Kumar"  Don't forget to strip whitespaces from front & back
-# 		address = message.text.replace("kycaddr", "").strip()
-
-# 		# convert address to it's hash to validate via Blockchain
-# 		h = SHA256.new()
-# 		h.update(bytes(address, 'utf-8'))
-# 		address_hash = h.hexdigest()
-	
-# 		try:				# for Blockchain
-# 			# push txn
-# 			bot.send_message(message.chat.id, 'Validating on EOSIO Blockchain...')
-# 			# asyncio.get_event_loop().run_until_complete(addmodkyc(message.chat.id, "", address_hash, "", "", "", message))
-# 			asyncio.run(addmodkyc(message.chat.id, "", address_hash, "", "", "", message))
-			
-# 			try:			# for Redis DB
-# 				t_start = time.time()
-
-# 				bot.send_message(message.chat.id, 'Saving address to Redis DB...')
-
-# 				r.hset(str(message.chat.id), 'address', address)
-
-# 				elapsed_time = time.time() - t_start
-# 				elapsed_time = '{:.2f}'.format(elapsed_time)
-
-# 				bot.reply_to(message, f'{address} \nsaved. \n\n*Response time: {elapsed_time} secs*', parse_mode='MARKDOWN')
-# 				bot.send_message(message.chat.id, 'To view your updated KYC, use /showkycinfo command.')
-
-# 			except redis.exceptions.ConnectionError as e:
-# 				bot.send_message(message.chat.id, f'Redis Database Connection Error')
-
-# 		except EosRpcException as e:
-# 			e = str(e).replace("\'", "\"")
-# 			code_idx = e.find('code')
-# 			code_val = int(e[code_idx+7:(code_idx+14)])
-# 			# print(code_idx)
-# 			# print(code_val)
-# 			# print(type(code_val))
-# 			if code_idx != -1:			# found "code" key
-# 				if code_val == 3010001:						# Case-1: invalid name
-# 					bot.send_message(message.chat.id, "Sorry! Your EOSIO account name doesn\'t exist on this chain.")
-# 				elif code_val == 3050003:					# Case-1: incorrect quantity or symbol
-# 					bot.send_message(message.chat.id, "Sorry! Your EOSIO account doesn\'t have any balances corresponding to parsed quantity or symbol on this chain.")
-# 				elif code_val == 3080004:
-# 					bot.send_message(message.chat.id, f"Sorry! The contract account \'tippertipper\' doesn\'t have enough CPU to handle this activity on this chain. Please contact the Bot owner {bot.owner}.")
-# 				else:
-# 					bot.send_message(message.chat.id, f"Sorry! Some other Exception occured. Please contact the Bot owner {bot.owner}.")
-# 			else:						# NOT found "code" key
-# 				bot.send_message(message.chat.id, f"Sorry! No code no. is present in the error. Please contact the Bot owner {bot.owner}.")
-
-
-# 			# chat.send(f"Assertion Error msg --> {json.loads(str(e))['what']}")          # print the message
-# 			# chat.send(f"Assertion Error msg -->{str(e)}")          # print the message
-# 		except EosAccountDoesntExistException:
-# 			bot.send_message(message.chat.id, f'Your EOSIO account doesn\'t exist on this chain.')
-# 		except EosAssertMessageException as e:
-# 			e = str(e).replace("\'", "\"")            # replace single quotes (') with double quotes (") to make it as valid JSON & then extract the 'message' value.
-# 			# chat.send(f"{str(e)}", syntax="plain")      # print full error dict
-# 			bot.send_message(message.chat.id, f"Assertion Error msg --> {json.loads(e)['details'][0]['message']}")          # print the message
-# 		except EosDeadlineException:
-# 			bot.send_message(message.chat.id, f'Transaction timed out. Please try again.')
-# 		except EosRamUsageExceededException:
-# 			bot.send_message(message.chat.id, f'Transaction requires more RAM than what’s available on the account. Please contact the Bot owner {bot.owner}.');
-# 		except EosTxCpuUsageExceededException:
-# 			bot.send_message(message.chat.id, f'Not enough EOS were staked for CPU. Please contact the Bot owner {bot.owner}.');
-# 		except EosTxNetUsageExceededException:
-# 			bot.send_message(message.chat.id, f'Not enough EOS were staked for NET. Please contact the Bot owner {bot.owner}.');
 	
 # ---------------------------callback: kyc_docfrontimg------------------------------------------------------------------------------
 @bot.callback_query_handler(func=lambda call: call.data == 'kyc_docfrontimg')
@@ -420,13 +349,13 @@ def kyc_docbackimg_callback(call):
 @bot.callback_query_handler(func=lambda call: call.data == 'kyc_selfie')
 def kyc_selfie_callback(call):
 	bot.send_message(call.message.chat.id, "Please, send your selfie. E.g.")
-	bot.send_photo(call.message.chat.id, open("../others/res/selfie.jpg", "rb"), caption="selfie")
+	bot.send_photo(call.message.chat.id, open("../others/res/selfie.jpg", "rb"), caption="kycself")
 
-# ---------------------------Handle photos: kycdocf, kycdocb, selfie---------------------------------------------
-# receive photo with specific captions - kycdocf, kycdocb, selfie
+# ---------------------------Handle photos: kycdocf, kycdocb, kycself---------------------------------------------
+# receive photo with specific captions - kycdocf, kycdocb, kycself
 @bot.message_handler(content_types=['photo'])
 def receive_photo(message):
-	if message.caption == "kycdocf" or message.caption == "kycdocb" or message.caption == "selfie":
+	if message.caption == "kycdocf" or message.caption == "kycdocb" or message.caption == "kycself":
 		photo_fileid = message.photo[-1].file_id
 		# bot.reply_to(message, f"photo msg detected. & the file_id is \n{photo_fileid}")
 		# bot.send_photo(message.chat.id, f"{photo_fileid}")
@@ -462,7 +391,7 @@ def receive_photo(message):
 			elif message.caption == "kycdocb":
 				# asyncio.get_event_loop().run_until_complete(addmodkyc(message.chat.id, "", "", "", photo_hash, "", message))
 				asyncio.run(addmodkyc(message.chat.id, "", "", "", photo_hash, "", message))
-			elif message.caption == "selfie":
+			elif message.caption == "kycself":
 				# asyncio.get_event_loop().run_until_complete(addmodkyc(message.chat.id, "", "", "", "", photo_hash, message))
 				asyncio.run(addmodkyc(message.chat.id, "", "", "", "", photo_hash, message))
 
@@ -471,7 +400,12 @@ def receive_photo(message):
 
 				bot.send_message(message.chat.id, 'Saving photo to Redis DB...')
 
-				r.hset(str(message.chat.id), f"{message.caption}", img_encoded)
+				if message.caption == "kycdocf":
+					r.hset(str(message.chat.id), "docfront", img_encoded)
+				elif message.caption == "kycdocb":
+					r.hset(str(message.chat.id), "docback", img_encoded)
+				elif message.caption == "kycself":
+					r.hset(str(message.chat.id), "selfie", img_encoded)
 				elapsed_time = time.time() - t_start
 				elapsed_time = '{:.2f}'.format(elapsed_time)
 
@@ -520,7 +454,7 @@ def receive_photo(message):
 		except EosTxNetUsageExceededException:
 			bot.send_message(message.chat.id, f'Not enough EOS were staked for NET. Please contact the Bot owner {bot.owner}.');
 	else:
-		bot.reply_to(message, "Caption is not provided alongwith. So, please send photo again with an acceptable caption: \nkycdocf, kycdocb, selfie")
+		bot.reply_to(message, "Caption is not provided alongwith. So, please send photo again with an acceptable caption: \nkycdocf, kycdocb, kycself")
 
 
 
