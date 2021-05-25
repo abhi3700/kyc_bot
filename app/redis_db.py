@@ -60,7 +60,8 @@ kyc_data_232532532 = {
 
 # print(r.hexists('232532532', 'name'))
 
-r.delete('410894301')
+print(r.exists('410894301'))
+# r.delete('410894301')
 
 print(r.keys())
 # -------------M-2-------------------

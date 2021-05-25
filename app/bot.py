@@ -144,6 +144,37 @@ async def delkyc(
 
 	bot.send_message(message.chat.id, f"\nView the transaction here: https://bloks.io/transaction/{response[20:84]} \n\n*Response time: {elapsed_time} secs*", parse_mode= 'MARKDOWN') if chain_type== "eos-mainnet" else bot.send_message(message.chat.id, f"\nView the transaction here: https://{chain_name}.bloks.io/transaction/{response[20:84]} \n\n*Response time: {elapsed_time} secs*", parse_mode= 'MARKDOWN')          # print the txn_id for successful transaction
 
+# ===========================command: /start /help===========================================================================
+@bot.message_handler(commands=['start', 'help'])
+def start_help_command(message):
+	'''
+	This is a KYC Bot.
+
+	Description: Here, all the KYC info added/modified is first validated on Blockchain & then stored into cloud database. User gets to receive a unique immutable transaction id, which acts as a proof for an activity done.  
+
+	Use these commands to add/modify your KYC info.
+
+	/addmodkyc - Add/Modify KYC to this bot via Blockchain
+	/showkycinfo - Show user's updated KYC info on Cloud & Blockchain
+	/delkyc - Delete user's KYC info from this bot via Blockchain
+	'''
+	bot.send_message(message.chat.id, 
+		'''
+		This is a KYC Bot.
+
+		<u>Description</u>: \nHere, all the KYC info added/modified is first validated on Blockchain & then stored into cloud database. User gets to receive a unique immutable transaction id, which acts as a proof for an activity done.  
+
+		Use these commands to add/modify your KYC info.
+
+		<b>/start</b> - Start the Bot 
+		<b>/help</b> - Help
+		<b>/addmodkyc</b> - Add/Modify KYC to this bot via Blockchain
+		<b>/showkycinfo</b> - Show user's updated KYC info on Cloud & Blockchain
+		<b>/delkyc</b> - Delete user's KYC info from this bot via Blockchain
+		''',
+		parse_mode= 'HTML'
+	)
+
 # ===========================command: /showkycinfo===========================================================================
 @bot.message_handler(commands=['showkycinfo'])
 def showkycinfo_command(message):
@@ -215,70 +246,6 @@ def showkycinfo_command(message):
 	except redis.exceptions.ConnectionError as e:
 		chat.send(f'Redis Database Connection Error')
 	
-# ===========================command: /delkyc===========================
-@bot.message_handler(commands=['delkyc'])
-def delkyc_command(message):
-	"""
-		Delete user's KYC info from this bot via Blockchain
-	"""
-	try:				# for Blockchain
-		# push txn
-		bot.send_message(message.chat.id, 'Validating on EOSIO Blockchain...')
-		# asyncio.get_event_loop().run_until_complete(delkyc(message.chat.id, message))
-		asyncio.run(delkyc(message.chat.id, message))
-		
-		try:			# for Redis DB
-			t_start = time.time()
-
-			bot.send_message(message.chat.id, 'Deleting KYC from Redis DB...')
-
-			r.delete(str(message.chat.id))
-
-			elapsed_time = time.time() - t_start
-			elapsed_time = '{:.2f}'.format(elapsed_time)
-
-			bot.send_message(message.chat.id, f'Your KYC is deleted. To add, use /addmodkyc command. \n\n*Response time: {elapsed_time} secs*', parse_mode='MARKDOWN')
-			bot.send_message(message.chat.id, 'To view your updated KYC, use /showkycinfo command.')
-
-		except redis.exceptions.ConnectionError as e:
-			bot.send_message(message.chat.id, f'Redis Database Connection Error')
-
-	except EosRpcException as e:
-		e = str(e).replace("\'", "\"")
-		code_idx = e.find('code')
-		code_val = int(e[code_idx+7:(code_idx+14)])
-		# print(code_idx)
-		# print(code_val)
-		# print(type(code_val))
-		if code_idx != -1:			# found "code" key
-			if code_val == 3010001:						# Case-1: invalid name
-				bot.send_message(message.chat.id, "Sorry! Your EOSIO account name doesn\'t exist on this chain.")
-			elif code_val == 3050003:					# Case-1: incorrect quantity or symbol
-				bot.send_message(message.chat.id, "Sorry! Your EOSIO account doesn\'t have any balances corresponding to parsed quantity or symbol on this chain.")
-			elif code_val == 3080004:
-				bot.send_message(message.chat.id, f"Sorry! The contract account \'tippertipper\' doesn\'t have enough CPU to handle this activity on this chain. Please contact the Bot owner {bot.owner}.")
-			else:
-				bot.send_message(message.chat.id, f"Sorry! Some other Exception occured. Please contact the Bot owner {bot.owner}.")
-		else:						# NOT found "code" key
-			bot.send_message(message.chat.id, f"Sorry! No code no. is present in the error. Please contact the Bot owner {bot.owner}.")
-
-
-		# chat.send(f"Assertion Error msg --> {json.loads(str(e))['what']}")          # print the message
-		# chat.send(f"Assertion Error msg -->{str(e)}")          # print the message
-	except EosAccountDoesntExistException:
-		bot.send_message(message.chat.id, f'Your EOSIO account doesn\'t exist on this chain.')
-	except EosAssertMessageException as e:
-		e = str(e).replace("\'", "\"")            # replace single quotes (') with double quotes (") to make it as valid JSON & then extract the 'message' value.
-		# chat.send(f"{str(e)}", syntax="plain")      # print full error dict
-		bot.send_message(message.chat.id, f"Assertion Error msg --> {json.loads(e)['details'][0]['message']}")          # print the message
-	except EosDeadlineException:
-		bot.send_message(message.chat.id, f'Transaction timed out. Please try again.')
-	except EosRamUsageExceededException:
-		bot.send_message(message.chat.id, f'Transaction requires more RAM than what’s available on the account. Please contact the Bot owner {bot.owner}.');
-	except EosTxCpuUsageExceededException:
-		bot.send_message(message.chat.id, f'Not enough EOS were staked for CPU. Please contact the Bot owner {bot.owner}.');
-	except EosTxNetUsageExceededException:
-		bot.send_message(message.chat.id, f'Not enough EOS were staked for NET. Please contact the Bot owner {bot.owner}.');
 
 # ===========================command: /addmodkyc===========================================================================
 @bot.message_handler(commands=['addmodkyc'])
@@ -312,21 +279,23 @@ def kyc_address_callback(call):
 	bot.send_message(call.message.chat.id, "kycaddr 1504 Liberty St.\nNew York, NY\n10004 USA")
 
 
-@bot.message_handler(content_types=['text'])
+# NOTE: Here, "/xncjd" has been ignored in the message handler using lambda
+# If not this line is not added then all the commands func. defined after this message handler has to be shifted above this func.
+@bot.message_handler(func=lambda message: not message.text.startswith("/"), content_types=['text'])
 def handle_text(message):
-	if message.text.__contains__("kycname") or message.text.__contains__("kycaddr"):
+	if message.text.startswith("kycname") or message.text.startswith("kycaddr"):
 		name = address = ''
 		try:				# for Blockchain
 			# push txn
 			bot.send_message(message.chat.id, 'Validating on EOSIO Blockchain...')
 
-			if message.text.__contains__("kycname"):
+			if message.text.startswith("kycname"):
 				# "kycname Ramesh Kumar" --> "Ramesh Kumar"  Don't forget to strip whitespaces from front & back
 				name = message.text.replace("kycname", "").strip()
 				# asyncio.get_event_loop().run_until_complete(addmodkyc(message.chat.id, name, "", "", "", "", message))
 				asyncio.run(addmodkyc(message.chat.id, name, "", "", "", "", message))
 
-			elif message.text.__contains__("kycaddr"):
+			elif message.text.startswith("kycaddr"):
 				address = message.text.replace("kycaddr", "").strip()
 
 				# convert address to it's hash to validate via Blockchain
@@ -343,9 +312,9 @@ def handle_text(message):
 
 				bot.send_message(message.chat.id, 'Saving name to Redis DB...')
 
-				if message.text.__contains__("kycname"):
+				if message.text.startswith("kycname"):
 					r.hset(str(message.chat.id), 'name', name)
-				elif message.text.__contains__("kycaddr"):
+				elif message.text.startswith("kycaddr"):
 					r.hset(str(message.chat.id), 'address', address)
 
 				elapsed_time = time.time() - t_start
@@ -522,6 +491,74 @@ def receive_photo(message):
 		bot.reply_to(message, "Caption is not provided alongwith. So, please send photo again with an acceptable caption: \nkycdocf, kycdocb, kycself")
 
 
+# ===========================command: /delkyc===========================
+@bot.message_handler(commands=['delkyc'])
+def delkyc_command(message):
+	"""
+		Delete user's KYC info from this bot via Blockchain
+	"""
+	if r.exists(str(message.chat.id)):
+
+		try:				# for Blockchain
+			# push txn
+			bot.send_message(message.chat.id, 'Validating on EOSIO Blockchain...')
+			# asyncio.get_event_loop().run_until_complete(delkyc(message.chat.id, message))
+			asyncio.run(delkyc(message.chat.id, message))
+			
+			try:			# for Redis DB
+				t_start = time.time()
+
+				bot.send_message(message.chat.id, 'Deleting KYC from Redis DB...')
+
+				r.delete(str(message.chat.id))
+
+				elapsed_time = time.time() - t_start
+				elapsed_time = '{:.2f}'.format(elapsed_time)
+
+				bot.send_message(message.chat.id, f'Your KYC is deleted. To add, use /addmodkyc command. \n\n*Response time: {elapsed_time} secs*', parse_mode='MARKDOWN')
+				bot.send_message(message.chat.id, 'To view your updated KYC, use /showkycinfo command.')
+
+			except redis.exceptions.ConnectionError as e:
+				bot.send_message(message.chat.id, f'Redis Database Connection Error')
+
+		except EosRpcException as e:
+			e = str(e).replace("\'", "\"")
+			code_idx = e.find('code')
+			code_val = int(e[code_idx+7:(code_idx+14)])
+			# print(code_idx)
+			# print(code_val)
+			# print(type(code_val))
+			if code_idx != -1:			# found "code" key
+				if code_val == 3010001:						# Case-1: invalid name
+					bot.send_message(message.chat.id, "Sorry! Your EOSIO account name doesn\'t exist on this chain.")
+				elif code_val == 3050003:					# Case-1: incorrect quantity or symbol
+					bot.send_message(message.chat.id, "Sorry! Your EOSIO account doesn\'t have any balances corresponding to parsed quantity or symbol on this chain.")
+				elif code_val == 3080004:
+					bot.send_message(message.chat.id, f"Sorry! The contract account \'tippertipper\' doesn\'t have enough CPU to handle this activity on this chain. Please contact the Bot owner {bot.owner}.")
+				else:
+					bot.send_message(message.chat.id, f"Sorry! Some other Exception occured. Please contact the Bot owner {bot.owner}.")
+			else:						# NOT found "code" key
+				bot.send_message(message.chat.id, f"Sorry! No code no. is present in the error. Please contact the Bot owner {bot.owner}.")
+
+
+			# chat.send(f"Assertion Error msg --> {json.loads(str(e))['what']}")          # print the message
+			# chat.send(f"Assertion Error msg -->{str(e)}")          # print the message
+		except EosAccountDoesntExistException:
+			bot.send_message(message.chat.id, f'Your EOSIO account doesn\'t exist on this chain.')
+		except EosAssertMessageException as e:
+			e = str(e).replace("\'", "\"")            # replace single quotes (') with double quotes (") to make it as valid JSON & then extract the 'message' value.
+			# chat.send(f"{str(e)}", syntax="plain")      # print full error dict
+			bot.send_message(message.chat.id, f"Assertion Error msg --> {json.loads(e)['details'][0]['message']}")          # print the message
+		except EosDeadlineException:
+			bot.send_message(message.chat.id, f'Transaction timed out. Please try again.')
+		except EosRamUsageExceededException:
+			bot.send_message(message.chat.id, f'Transaction requires more RAM than what’s available on the account. Please contact the Bot owner {bot.owner}.');
+		except EosTxCpuUsageExceededException:
+			bot.send_message(message.chat.id, f'Not enough EOS were staked for CPU. Please contact the Bot owner {bot.owner}.');
+		except EosTxNetUsageExceededException:
+			bot.send_message(message.chat.id, f'Not enough EOS were staked for NET. Please contact the Bot owner {bot.owner}.');
+	else:
+		bot.reply_to(message, "Sorry! there is no KYC data to delete for this user. \nTo add KYC, use /addmodkyc command.")
 
 
 
