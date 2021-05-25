@@ -215,6 +215,71 @@ def showkycinfo_command(message):
 	except redis.exceptions.ConnectionError as e:
 		chat.send(f'Redis Database Connection Error')
 	
+# ===========================command: /delkyc===========================
+@bot.message_handler(commands=['delkyc'])
+def delkyc_command(message):
+	"""
+		Delete user's KYC info from this bot via Blockchain
+	"""
+	try:				# for Blockchain
+		# push txn
+		bot.send_message(message.chat.id, 'Validating on EOSIO Blockchain...')
+		# asyncio.get_event_loop().run_until_complete(delkyc(message.chat.id, message))
+		asyncio.run(delkyc(message.chat.id, message))
+		
+		try:			# for Redis DB
+			t_start = time.time()
+
+			bot.send_message(message.chat.id, 'Deleting KYC from Redis DB...')
+
+			r.delete(str(message.chat.id))
+
+			elapsed_time = time.time() - t_start
+			elapsed_time = '{:.2f}'.format(elapsed_time)
+
+			bot.send_message(message.chat.id, f'Your KYC is deleted. To add, use /addmodkyc command. \n\n*Response time: {elapsed_time} secs*', parse_mode='MARKDOWN')
+			bot.send_message(message.chat.id, 'To view your updated KYC, use /showkycinfo command.')
+
+		except redis.exceptions.ConnectionError as e:
+			bot.send_message(message.chat.id, f'Redis Database Connection Error')
+
+	except EosRpcException as e:
+		e = str(e).replace("\'", "\"")
+		code_idx = e.find('code')
+		code_val = int(e[code_idx+7:(code_idx+14)])
+		# print(code_idx)
+		# print(code_val)
+		# print(type(code_val))
+		if code_idx != -1:			# found "code" key
+			if code_val == 3010001:						# Case-1: invalid name
+				bot.send_message(message.chat.id, "Sorry! Your EOSIO account name doesn\'t exist on this chain.")
+			elif code_val == 3050003:					# Case-1: incorrect quantity or symbol
+				bot.send_message(message.chat.id, "Sorry! Your EOSIO account doesn\'t have any balances corresponding to parsed quantity or symbol on this chain.")
+			elif code_val == 3080004:
+				bot.send_message(message.chat.id, f"Sorry! The contract account \'tippertipper\' doesn\'t have enough CPU to handle this activity on this chain. Please contact the Bot owner {bot.owner}.")
+			else:
+				bot.send_message(message.chat.id, f"Sorry! Some other Exception occured. Please contact the Bot owner {bot.owner}.")
+		else:						# NOT found "code" key
+			bot.send_message(message.chat.id, f"Sorry! No code no. is present in the error. Please contact the Bot owner {bot.owner}.")
+
+
+		# chat.send(f"Assertion Error msg --> {json.loads(str(e))['what']}")          # print the message
+		# chat.send(f"Assertion Error msg -->{str(e)}")          # print the message
+	except EosAccountDoesntExistException:
+		bot.send_message(message.chat.id, f'Your EOSIO account doesn\'t exist on this chain.')
+	except EosAssertMessageException as e:
+		e = str(e).replace("\'", "\"")            # replace single quotes (') with double quotes (") to make it as valid JSON & then extract the 'message' value.
+		# chat.send(f"{str(e)}", syntax="plain")      # print full error dict
+		bot.send_message(message.chat.id, f"Assertion Error msg --> {json.loads(e)['details'][0]['message']}")          # print the message
+	except EosDeadlineException:
+		bot.send_message(message.chat.id, f'Transaction timed out. Please try again.')
+	except EosRamUsageExceededException:
+		bot.send_message(message.chat.id, f'Transaction requires more RAM than what’s available on the account. Please contact the Bot owner {bot.owner}.');
+	except EosTxCpuUsageExceededException:
+		bot.send_message(message.chat.id, f'Not enough EOS were staked for CPU. Please contact the Bot owner {bot.owner}.');
+	except EosTxNetUsageExceededException:
+		bot.send_message(message.chat.id, f'Not enough EOS were staked for NET. Please contact the Bot owner {bot.owner}.');
+
 # ===========================command: /addmodkyc===========================================================================
 @bot.message_handler(commands=['addmodkyc'])
 def addmodkyc_command(message):
@@ -459,69 +524,6 @@ def receive_photo(message):
 
 
 
-# ===========================command: /delkyc===========================
-@bot.message_handler(commands=['delkyc'])
-def delkyc_command(message):
-	"""
-		Delete user's KYC info from this bot via Blockchain
-	"""
-	try:				# for Blockchain
-		# push txn
-		bot.send_message(message.chat.id, 'Validating on EOSIO Blockchain...')
-		asyncio.get_event_loop().run_until_complete(delkyc(message.chat.id, message))
-		
-		try:			# for Redis DB
-			t_start = time.time()
-
-			bot.send_message(message.chat.id, 'Deleting KYC from Redis DB...')
-
-			r.delete(str(message.chat.id))
-
-			elapsed_time = time.time() - t_start
-			elapsed_time = '{:.2f}'.format(elapsed_time)
-
-			bot.send_message(message.chat.id, f'Your KYC is deleted. To add, use /addmodkyc command. \n\n*Response time: {elapsed_time} secs*', parse_mode='MARKDOWN')
-			bot.send_message(message.chat.id, 'To view your updated KYC, use /showkycinfo command.')
-
-		except redis.exceptions.ConnectionError as e:
-			bot.send_message(message.chat.id, f'Redis Database Connection Error')
-
-	except EosRpcException as e:
-		e = str(e).replace("\'", "\"")
-		code_idx = e.find('code')
-		code_val = int(e[code_idx+7:(code_idx+14)])
-		# print(code_idx)
-		# print(code_val)
-		# print(type(code_val))
-		if code_idx != -1:			# found "code" key
-			if code_val == 3010001:						# Case-1: invalid name
-				bot.send_message(message.chat.id, "Sorry! Your EOSIO account name doesn\'t exist on this chain.")
-			elif code_val == 3050003:					# Case-1: incorrect quantity or symbol
-				bot.send_message(message.chat.id, "Sorry! Your EOSIO account doesn\'t have any balances corresponding to parsed quantity or symbol on this chain.")
-			elif code_val == 3080004:
-				bot.send_message(message.chat.id, f"Sorry! The contract account \'tippertipper\' doesn\'t have enough CPU to handle this activity on this chain. Please contact the Bot owner {bot.owner}.")
-			else:
-				bot.send_message(message.chat.id, f"Sorry! Some other Exception occured. Please contact the Bot owner {bot.owner}.")
-		else:						# NOT found "code" key
-			bot.send_message(message.chat.id, f"Sorry! No code no. is present in the error. Please contact the Bot owner {bot.owner}.")
-
-
-		# chat.send(f"Assertion Error msg --> {json.loads(str(e))['what']}")          # print the message
-		# chat.send(f"Assertion Error msg -->{str(e)}")          # print the message
-	except EosAccountDoesntExistException:
-		bot.send_message(message.chat.id, f'Your EOSIO account doesn\'t exist on this chain.')
-	except EosAssertMessageException as e:
-		e = str(e).replace("\'", "\"")            # replace single quotes (') with double quotes (") to make it as valid JSON & then extract the 'message' value.
-		# chat.send(f"{str(e)}", syntax="plain")      # print full error dict
-		bot.send_message(message.chat.id, f"Assertion Error msg --> {json.loads(e)['details'][0]['message']}")          # print the message
-	except EosDeadlineException:
-		bot.send_message(message.chat.id, f'Transaction timed out. Please try again.')
-	except EosRamUsageExceededException:
-		bot.send_message(message.chat.id, f'Transaction requires more RAM than what’s available on the account. Please contact the Bot owner {bot.owner}.');
-	except EosTxCpuUsageExceededException:
-		bot.send_message(message.chat.id, f'Not enough EOS were staked for CPU. Please contact the Bot owner {bot.owner}.');
-	except EosTxNetUsageExceededException:
-		bot.send_message(message.chat.id, f'Not enough EOS were staked for NET. Please contact the Bot owner {bot.owner}.');
 
 # ================================================MAIN===========================================================================
 # bot.polling(none_stop= True)			# for Production
