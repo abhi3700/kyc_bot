@@ -563,5 +563,5 @@ def delkyc_command(message):
 
 
 # ================================================MAIN===========================================================================
-# bot.polling(none_stop= True)			# for Production
-bot.polling()							# for DEBUG
+bot.polling(none_stop= True)			# for Production
+# bot.polling()							# for DEBUG
