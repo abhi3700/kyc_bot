@@ -1,4 +1,4 @@
-botogram2
+pyTelegramBotAPI
 asyncio
 aioeos
 redis
