@@ -26,3 +26,5 @@ kyc_table_info_url = "https://bloks.io/account/kycteosiobot?loadContract=true&ta
 API_ENDPOINT = "https://api.nft.storage/upload"
 API_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkaWQ6ZXRocjoweGU0QTRhOTNGQzBlZTI4MjEyMjBiQTI0RTgwNTkxNjg2NzY1QUFCNDMiLCJpc3MiOiJuZnQtc3RvcmFnZSIsImlhdCI6MTYyMTAyMjY0NDQ1OCwibmFtZSI6Imt5Y2JvdCJ9.rkAqB60ANzkwoe5XGIP89fTrxxiyK4zkIRq6bc5NQ7c" 
 
+# Emoji
+paintbrush_emoji = '🖌️'						# b'\xf0\x9f\x96\x8c\xef\xb8\x8f'.decode('utf-8')   U+1F58C

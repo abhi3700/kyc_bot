@@ -803,8 +803,76 @@ def delkyc_command(message):
 	else:
 		bot.reply_to(message, "Sorry! there is no KYC data to delete for this user. \nTo add KYC, use /addmodkyc command.")
 
+# ===========================command: /setkycviewstatus===========================
+@bot.message_handler(commands=['setkycviewstatus'])
+def setkycviewstatus_command(message):
+	"""
+		Show the current KYC Access Status
+		- | Change |
 
+		if user_id found on the KYC blockchain:
+				- fetch the user_id view_status
+				- Show change button
+		else:
+			print("Sorry, there is no KYC data for the user id.")	
+	"""
+	markup = telebot.types.InlineKeyboardMarkup(row_width=1)   # 'one_time_keyboard' hides the keyboard automatically when just after pressing button
+	itembtn1 = telebot.types.InlineKeyboardButton(f'{paintbrush_emoji} Change', callback_data = "setkycviewstatus_callback")
+	markup.add(itembtn1)
 
+	bot.send_message(message.chat.id, "Please, select one option to add KYC", reply_markup= markup)
+	try:			# for Redis DB
+
+	except redis.exceptions.ConnectionError as e:
+		bot.send_message(message.chat.id, f'Redis Database Connection Error')
+
+# ---------------------------callback: kyc_selfie------------------------------------------------------------------------------
+@bot.callback_query_handler(func=lambda call: call.data == 'setkycviewstatus_callback')
+def setkycviewstatus_callback(call):
+	# if user_id found on the KYC blockchain:
+	if True:
+		pass
+	# mkup_reply = types.ReplyKeyboardMarkup(one_time_keyboard= True, row_width=2)
+	# itembtn_reply1 = types.KeyboardButton("Yes")
+	# itembtn_reply2 = types.KeyboardButton("No")
+	# mkup_reply.add(itembtn_reply1, itembtn_reply2)
+	# msg = bot.send_message(call.message.chat.id, "Do you want to share KYC data with the admin?", reply_markup= mkup_reply)
+	# bot.register_next_step_handler(msg, viewstatus_kb_callback)
+	else:
+		bot.send_message(call.message.chat.id, "Sorry, there is no KYC data for the user id.")
+
+def viewstatus_kb_callback(m):
+	if ((m.text == 'Yes') or (m.text == 'No')):
+		# pass through the blockchain
+		# & then store into the cloud
+	else:
+		bot.send_message(m.chat.id, "Sorry, you have given an invalid View status.")
+
+# ===========================command: /viewuserkyc===========================
+@bot.message_handler(commands=['viewuserkyc'])
+def viewuserkyc_command(message):
+	'''
+		- fetch user_id from KYC TABLE on Blockchain
+		- if found:
+			check for view status of the user
+			if true:
+				paste /showkycinfo code
+			else:
+				print("Sorry, the user has not given the access to the admin to view KYC data.")
+		- else:
+			print("Sorry, there is no KYC data for the user id.")
+
+	'''
+	# if user_id found on the KYC blockchain:
+	if True:
+		# check for view status of the user
+		# if true:
+		# 	paste /showkycinfo code
+		# else:
+		# 	print("Sorry, the user has not given the access to the admin to view KYC data.")
+		pass
+	else:
+		bot.send_message(message.chat.id, "Sorry, there is no KYC data for the user id.")
 # ================================================MAIN===========================================================================
 bot.polling(none_stop= True)			# for Production
 # bot.polling()							# for DEBUG
