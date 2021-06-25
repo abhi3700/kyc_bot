@@ -8,18 +8,18 @@ import base64
 from Crypto.Hash import SHA256
 # import requests
 
-from aioeos import EosAccount, EosJsonRpc, EosTransaction
-from aioeos import types
+# from aioeos import EosAccount, EosJsonRpc, EosTransaction
+# from aioeos import types
 
-from aioeos.exceptions import EosRpcException
-from aioeos.exceptions import EosAccountDoesntExistException
-from aioeos.exceptions import EosAssertMessageException
-from aioeos.exceptions import EosDeadlineException
-from aioeos.exceptions import EosRamUsageExceededException
-from aioeos.exceptions import EosTxCpuUsageExceededException
-from aioeos.exceptions import EosTxNetUsageExceededException
+# from aioeos.exceptions import EosRpcException
+# from aioeos.exceptions import EosAccountDoesntExistException
+# from aioeos.exceptions import EosAssertMessageException
+# from aioeos.exceptions import EosDeadlineException
+# from aioeos.exceptions import EosRamUsageExceededException
+# from aioeos.exceptions import EosTxCpuUsageExceededException
+# from aioeos.exceptions import EosTxNetUsageExceededException
 
-from input import *
+# from input import *
 
 # --------------------About Bot--------------------------------------------------------------------
 bot= telebot.TeleBot(token= API_key, parse_mode= None)			# You can set parse_mode by default. HTML or 'MARKDOWN'
@@ -31,66 +31,145 @@ bot.owner = "@abhi3700"
 r = redis.from_url(REDIS_URL, ssl_cert_reqs=None)		# ssl_verify to false
 
 # =========================func for addmodkyc ACTION========================================================
-async def addmodkyc(
+'''
+	@return Returns response
+'''
+def addmodkyc(
 		plat_user_id,
 		fullname,
 		address_hash,
 		document_id_front_hash,
 		document_id_back_hash,
-		selfie_hash,
-		message
+		selfie_hash 
 	):
-	t_start = time.time()		# timer start
-
-	contract_account = EosAccount(
-	  name=kyc_eosio_ac,
-	  private_key=kyc_ac_private_key
-	)
-
-	action = types.EosAction(
-		account=kyc_eosio_ac,
-		name=addmod_action,
-		authorization=[contract_account.authorization(kyc_ac_key_perm)],
-		data={
-			'plat_user_id': plat_user_id,
-			'fullname': fullname,
-			'address_hash': address_hash,
-			'document_id_front_hash': document_id_front_hash,
-			'document_id_back_hash': document_id_back_hash,
-			'selfie_hash': selfie_hash
+	tx = {
+			"delay_sec":0,
+			"max_cpu_usage_ms":0,
+			"actions":[
+				{
+					"account": kyc_eosio_ac,
+					"name": addmod_action,
+					"data":{
+						'plat_user_id': plat_user_id,
+						'fullname': fullname,
+						'address_hash': address_hash,
+						'document_id_front_hash': document_id_front_hash,
+						'document_id_back_hash': document_id_back_hash,
+						'selfie_hash': selfie_hash
+						},
+					"authorization":[{"actor":kyc_eosio_ac,"permission": kyc_ac_key_perm}]
+				}
+			]
 		}
-	)
 
-	rpc = EosJsonRpc(url=Chain_URL)
-	block = await rpc.get_head_block()
+	# Get chain info from a working api node
+	info = r.get(f'{chain_api_url}/v1/chain/get_info').json()
+	ref_block_num, ref_block_prefix = get_tapos_info(info['last_irreversible_block_id'])
+	chain_id = info['chain_id']
 
-	transaction = EosTransaction(
-	  ref_block_num=block['block_num'] & 65535,
-	  ref_block_prefix=block['ref_block_prefix'],
-	  actions=[action]
-	)
+	# package transaction
+	data = tx['actions'][0]['data']
+	ds = DataStream()
+	ds.pack_uint64(data['plat_user_id'])
+	ds.pack_string(data['fullname'])
+	ds.pack_string(data['address_hash'])
+	ds.pack_string(data['document_id_front_hash'])
+	ds.pack_string(data['document_id_back_hash'])
+	ds.pack_string(data['selfie_hash'])
 
-	response = await rpc.sign_and_push_transaction(
-	  transaction, keys=[contract_account.key]
+	tx['actions'][0]['data'] = binascii.hexlify(ds.getvalue()).decode('utf-8')
+
+	tx.update({
+	    "expiration": get_expiration(datetime.utcnow(), timedelta(minutes=15).total_seconds()),
+	    "ref_block_num": ref_block_num,
+	    "ref_block_prefix": ref_block_prefix,
+	    "max_net_usage_words": 0,
+	    "max_cpu_usage_ms": 0,
+	    "delay_sec": 0,
+	    "context_free_actions": [],
+	    "transaction_extensions": [],
+	    "context_free_data": []
+	})
+
+	# Sign transaction
+	tx_id, tx = sign_tx(
+	   chain_id,
+	   tx,
+	   kyc_ac_private_key
 	)
-	# bot.send_message(f'{response}')             # print the full response after SUCCESS
+	ds = DataStream()
+	ds.pack_transaction(tx)
+	packed_trx = binascii.hexlify(ds.getvalue()).decode('utf-8')
+	tx = build_push_transaction_body(tx['signatures'][0], packed_trx)
+
+	# Push transaction
+	res = r.post(f'{chain_api_url}/v1/chain/push_transaction', json=tx)
+
+	return res
+
+
+
+
+# async def addmodkyc(
+# 		plat_user_id,
+# 		fullname,
+# 		address_hash,
+# 		document_id_front_hash,
+# 		document_id_back_hash,
+# 		selfie_hash,
+# 		message
+# 	):
+# 	t_start = time.time()		# timer start
+
+# 	contract_account = EosAccount(
+# 	  name=kyc_eosio_ac,
+# 	  private_key=kyc_ac_private_key
+# 	)
+
+# 	action = types.EosAction(
+# 		account=kyc_eosio_ac,
+# 		name=addmod_action,
+# 		authorization=[contract_account.authorization(kyc_ac_key_perm)],
+# 		data={
+# 			'plat_user_id': plat_user_id,
+# 			'fullname': fullname,
+# 			'address_hash': address_hash,
+# 			'document_id_front_hash': document_id_front_hash,
+# 			'document_id_back_hash': document_id_back_hash,
+# 			'selfie_hash': selfie_hash
+# 		}
+# 	)
+
+# 	rpc = EosJsonRpc(url=chain_api_url)
+# 	block = await rpc.get_head_block()
+
+# 	transaction = EosTransaction(
+# 	  ref_block_num=block['block_num'] & 65535,
+# 	  ref_block_prefix=block['ref_block_prefix'],
+# 	  actions=[action]
+# 	)
+
+# 	response = await rpc.sign_and_push_transaction(
+# 	  transaction, keys=[contract_account.key]
+# 	)
+# 	# bot.send_message(f'{response}')             # print the full response after SUCCESS
 	
-	response = str(response).replace("\'", "\"")            # replace single quotes (') with double quotes (") to make it as valid JSON & then extract the 'message' value.
-	# print(response)               # print the full response after replacing single with double quotes
-	'''
-		Here, as the response o/p is not a valid JSON giving error like this:
-		Error:
-			Parse error on line 1:
-			...producer_block_id": None, "receipt": {"s
-			-----------------------^
-			Expecting 'STRING', 'NUMBER', 'NULL', 'TRUE', 'FALSE', '{', '[', got 'undefined'
+# 	response = str(response).replace("\'", "\"")            # replace single quotes (') with double quotes (") to make it as valid JSON & then extract the 'message' value.
+# 	# print(response)               # print the full response after replacing single with double quotes
+# 	'''
+# 		Here, as the response o/p is not a valid JSON giving error like this:
+# 		Error:
+# 			Parse error on line 1:
+# 			...producer_block_id": None, "receipt": {"s
+# 			-----------------------^
+# 			Expecting 'STRING', 'NUMBER', 'NULL', 'TRUE', 'FALSE', '{', '[', got 'undefined'
 
-		So, capture txn_id by char no. i.e. {"transaction_id": "14e310c6e296560202ec808139d7e1b06901616f35b5c4a36ee0a4f065ec72a6"
-	'''
-	elapsed_time = time.time() - t_start
-	elapsed_time = '{:.2f}'.format(elapsed_time)
+# 		So, capture txn_id by char no. i.e. {"transaction_id": "14e310c6e296560202ec808139d7e1b06901616f35b5c4a36ee0a4f065ec72a6"
+# 	'''
+# 	elapsed_time = time.time() - t_start
+# 	elapsed_time = '{:.2f}'.format(elapsed_time)
 
-	bot.send_message(message.chat.id, f"\nView the transaction here: https://bloks.io/transaction/{response[20:84]} \n\n*Response time: {elapsed_time} secs*", parse_mode= 'MARKDOWN') if chain_type== "eos-mainnet" else bot.send_message(message.chat.id, f"\nView the transaction here: https://{chain_name}.bloks.io/transaction/{response[20:84]} \n\n*Response time: {elapsed_time} secs*", parse_mode= 'MARKDOWN')          # print the txn_id for successful transaction
+# 	bot.send_message(message.chat.id, f"\nView the transaction here: https://bloks.io/transaction/{response[20:84]} \n\n*Response time: {elapsed_time} secs*", parse_mode= 'MARKDOWN') if chain_type== "eos-mainnet" else bot.send_message(message.chat.id, f"\nView the transaction here: https://{chain_name}.bloks.io/transaction/{response[20:84]} \n\n*Response time: {elapsed_time} secs*", parse_mode= 'MARKDOWN')          # print the txn_id for successful transaction
 
 # =======================func for delkyc ACTION===================================================================
 async def delkyc(
@@ -113,7 +192,7 @@ async def delkyc(
 		}
 	)
 
-	rpc = EosJsonRpc(url=Chain_URL)
+	rpc = EosJsonRpc(url=chain_api_url)
 	block = await rpc.get_head_block()
 
 	transaction = EosTransaction(
@@ -279,23 +358,9 @@ def kncallback(message):
 		# push txn
 		bot.send_message(message.chat.id, 'Validating on EOSIO Blockchain...')
 
-		# if message.text.startswith("kycname"):
-			# "kycname Ramesh Kumar" --> "Ramesh Kumar"  Don't forget to strip whitespaces from front & back
-			# name = message.text.replace("kycname", "").strip()
-			# asyncio.get_event_loop().run_until_complete(addmodkyc(message.chat.id, name, "", "", "", "", message))
-		asyncio.run(addmodkyc(message.chat.id, name, "", "", "", "", message))
-
-		# elif message.text.startswith("kycaddr"):
-		# 	address = message.text.replace("kycaddr", "").strip()
-
-		# 	# convert address to it's hash to validate via Blockchain
-		# 	h = SHA256.new()
-		# 	h.update(bytes(address, 'utf-8'))
-		# 	address_hash = h.hexdigest()
-
-		# 	# asyncio.get_event_loop().run_until_complete(addmodkyc(message.chat.id, "", address_hash, "", "", "", message))
-		# 	asyncio.run(addmodkyc(message.chat.id, "", address_hash, "", "", "", message))
-
+		# asyncio.get_event_loop().run_until_complete(addmodkyc(message.chat.id, name, "", "", "", "", message))
+		# asyncio.run(addmodkyc(message.chat.id, name, "", "", "", "", message))
+		if 
 		
 		try:			# for Redis DB
 			t_start = time.time()
