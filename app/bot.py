@@ -288,7 +288,8 @@ def addmodkyc_command(message):
 def kyc_name_callback(call):
 	markup = telebot.types.ForceReply(selective=True)
 	msg = bot.send_message(call.message.chat.id, "Please, send your full name. E.g. Peter Bennett", reply_markup= markup)
-	# bot.send_message(call.message.chat.id, "Peter Bennett")
+	'''NOT supported'''
+	# msg = bot.edit_message_text( "Please, send your full name. E.g. Peter Bennett", call.message.chat.id, call.message.message_id, reply_markup=markup)
 	bot.register_next_step_handler(msg, kncallback)
 
 def kncallback(m):
@@ -320,26 +321,65 @@ def kncallback(m):
 	else:
 		bot.send_message(m.chat.id, "Sorry, the name must be of text type message.")
 
+# -----------------------------callback: kyc_address------------------
+@bot.callback_query_handler(func=lambda call: call.data == 'kyc_address')
+def kyc_address_callback(call):
+	markup = telebot.types.ForceReply(selective=True)
+	msg = bot.send_message(call.message.chat.id, "Please, send your address. E.g.\n1504 Liberty St.\nNew York, NY\n10004 USA", reply_markup= markup)
+	bot.register_next_step_handler(msg, kacallback)
+
+
+def kacallback(m):
+	res = addmodkyc(m.chat.id, get_hash_sha256(""), get_hash_sha256(m.text), get_hash_sha256(""), get_hash_sha256(""), get_hash_sha256(""))
+	if m.text:
+		# for Blockchain
+		if res.status_code == 202:
+			bot.send_message(m.chat.id, f"\nView the transaction here: https://bloks.io/transaction/{res.json()['transaction_id']}", parse_mode= 'MARKDOWN') if chain_type== "eos-mainnet" else bot.send_message(m.chat.id, f"\nView the transaction here: https://{chain_name}.bloks.io/transaction/{res.json()['transaction_id']}", parse_mode= 'MARKDOWN')          # print the txn_id for successful transaction			
+
+			# for Redis DB
+			try:
+				# t_start = time.time()
+
+				bot.send_message(m.chat.id, 'Saving name to Redis DB...')
+
+				r.hset(str(m.chat.id), 'address', m.text)
+
+				# elapsed_time = time.time() - t_start
+				# elapsed_time = '{:.2f}'.format(elapsed_time)
+
+				# bot.reply_to(m, f'Field saved. \n\n*Response time: {elapsed_time} secs*', parse_mode='MARKDOWN')
+				bot.reply_to(m, "Field saved.", parse_mode='MARKDOWN')
+				bot.send_message(m.chat.id, 'To view your updated KYC, use /showkycinfo command.')
+
+			except redis.exceptions.ConnectionError as e:
+				bot.send_message(m.chat.id, f'Redis Database Connection Error')
+		else:
+			bot.send_message(m.chat.id, f"Sorry, there is a error related to blockchain:\n{res.json()['error']['details'][0]['message']}\nPlease contact the Bot owner {bot.owner}.")
+	else:
+		bot.send_message(m.chat.id, "Sorry, the name must be of text type message.")
 
 
 
+	# address = message.text
 	# try:				# for Blockchain
 	# 	# push txn
 	# 	bot.send_message(message.chat.id, 'Validating on EOSIO Blockchain...')
 
-	# 	# asyncio.get_event_loop().run_until_complete(addmodkyc(message.chat.id, name, "", "", "", "", message))
-	# 	# asyncio.run(addmodkyc(message.chat.id, name, "", "", "", "", message))
-	# 	if 
+	# 	# convert address to it's hash to validate via Blockchain
+	# 	h = SHA256.new()
+	# 	h.update(bytes(address, 'utf-8'))
+	# 	address_hash = h.hexdigest()
+
+	# 	# asyncio.get_event_loop().run_until_complete(addmodkyc(message.chat.id, "", address_hash, "", "", "", message))
+	# 	asyncio.run(addmodkyc(message.chat.id, "", address_hash, "", "", "", message))
+
 		
 	# 	try:			# for Redis DB
 	# 		t_start = time.time()
 
-	# 		bot.send_message(message.chat.id, 'Saving name to Redis DB...')
+	# 		bot.send_message(message.chat.id, 'Saving address to Redis DB...')
 
-	# 		# if message.text.startswith("kycname"):
-	# 		r.hset(str(message.chat.id), 'name', name)
-	# 		# elif message.text.startswith("kycaddr"):
-	# 		# 	r.hset(str(message.chat.id), 'address', address)
+	# 		r.hset(str(message.chat.id), 'address', address)
 
 	# 		elapsed_time = time.time() - t_start
 	# 		elapsed_time = '{:.2f}'.format(elapsed_time)
@@ -388,85 +428,6 @@ def kncallback(m):
 	# 	bot.send_message(message.chat.id, f'Not enough EOS were staked for NET. Please contact the Bot owner {bot.owner}.');
 	# # else:
 	# # 	bot.reply_to(message, "Not sure, what do you mean. \nPlease follow up with /help command.")
-
-# -----------------------------callback: kyc_address------------------
-@bot.callback_query_handler(func=lambda call: call.data == 'kyc_address')
-def kyc_address_callback(call):
-	markup = telebot.types.ForceReply(selective=True)
-	msg = bot.send_message(call.message.chat.id, "Please, send your address. E.g.\n1504 Liberty St.\nNew York, NY\n10004 USA", reply_markup= markup)
-	bot.register_next_step_handler(msg, kacallback)
-	# bot.send_message(call.message.chat.id, "kycaddr 1504 Liberty St.\nNew York, NY\n10004 USA")
-
-
-def kacallback(message):
-	address = message.text
-	try:				# for Blockchain
-		# push txn
-		bot.send_message(message.chat.id, 'Validating on EOSIO Blockchain...')
-
-		# convert address to it's hash to validate via Blockchain
-		h = SHA256.new()
-		h.update(bytes(address, 'utf-8'))
-		address_hash = h.hexdigest()
-
-		# asyncio.get_event_loop().run_until_complete(addmodkyc(message.chat.id, "", address_hash, "", "", "", message))
-		asyncio.run(addmodkyc(message.chat.id, "", address_hash, "", "", "", message))
-
-		
-		try:			# for Redis DB
-			t_start = time.time()
-
-			bot.send_message(message.chat.id, 'Saving address to Redis DB...')
-
-			r.hset(str(message.chat.id), 'address', address)
-
-			elapsed_time = time.time() - t_start
-			elapsed_time = '{:.2f}'.format(elapsed_time)
-
-			bot.reply_to(message, f'Field saved. \n\n*Response time: {elapsed_time} secs*', parse_mode='MARKDOWN')
-			bot.send_message(message.chat.id, 'To view your updated KYC, use /showkycinfo command.')
-
-		except redis.exceptions.ConnectionError as e:
-			bot.send_message(message.chat.id, f'Redis Database Connection Error')
-	
-	except EosRpcException as e:
-		e = str(e).replace("\'", "\"")
-		code_idx = e.find('code')
-		code_val = int(e[code_idx+7:(code_idx+14)])
-		# print(code_idx)
-		# print(code_val)
-		# print(type(code_val))
-		if code_idx != -1:			# found "code" key
-			if code_val == 3010001:						# Case-1: invalid name
-				bot.send_message(message.chat.id, "Sorry! Your EOSIO account name doesn\'t exist on this chain.")
-			elif code_val == 3050003:					# Case-1: incorrect quantity or symbol
-				bot.send_message(message.chat.id, "Sorry! Your EOSIO account doesn\'t have any balances corresponding to parsed quantity or symbol on this chain.")
-			elif code_val == 3080004:
-				bot.send_message(message.chat.id, f"Sorry! The contract account {kyc_eosio_ac} doesn\'t have enough CPU to handle this activity on this chain. Please contact the Bot owner {bot.owner}.")
-			else:
-				bot.send_message(message.chat.id, f"Sorry! Some other Exception occured. Please contact the Bot owner {bot.owner}.")
-		else:						# NOT found "code" key
-			bot.send_message(message.chat.id, f"Sorry! No code no. is present in the error. Please contact the Bot owner {bot.owner}.")
-
-
-		# chat.send(f"Assertion Error msg --> {json.loads(str(e))['what']}")          # print the message
-		# chat.send(f"Assertion Error msg -->{str(e)}")          # print the message
-	except EosAccountDoesntExistException:
-		bot.send_message(message.chat.id, f'Your EOSIO account doesn\'t exist on this chain.')
-	except EosAssertMessageException as e:
-		e = str(e).replace("\'", "\"")            # replace single quotes (') with double quotes (") to make it as valid JSON & then extract the 'message' value.
-		# chat.send(f"{str(e)}", syntax="plain")      # print full error dict
-		bot.send_message(message.chat.id, f"Assertion Error msg --> {json.loads(e)['details'][0]['message']}")          # print the message
-	except EosDeadlineException:
-		bot.send_message(message.chat.id, f'Transaction timed out. Please try again.')
-	except EosRamUsageExceededException:
-		bot.send_message(message.chat.id, f'Transaction requires more RAM than what’s available on the account. Please contact the Bot owner {bot.owner}.');
-	except EosTxCpuUsageExceededException:
-		bot.send_message(message.chat.id, f'Not enough EOS were staked for CPU. Please contact the Bot owner {bot.owner}.');
-	except EosTxNetUsageExceededException:
-		bot.send_message(message.chat.id, f'Not enough EOS were staked for NET. Please contact the Bot owner {bot.owner}.');
-	# else:
-	# 	bot.reply_to(message, "Not sure, what do you mean. \nPlease follow up with /help command.")
 
 	
 # ---------------------------callback: kyc_docfrontimg------------------------------------------------------------------------------
