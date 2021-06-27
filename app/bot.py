@@ -180,9 +180,10 @@ async def setviews(
 			"actions":[
 				{
 					"account": kyc_eosio_ac,
-					"name": del_action,
+					"name": setviews_action,
 					"data":{
 						'plat_user_id': plat_user_id,
+						'view_status': view_status
 						},
 					"authorization":[{"actor":kyc_eosio_ac,"permission": kyc_ac_key_perm}]
 				}
@@ -646,8 +647,8 @@ def delkyc_command(message):
 		bot.send_message(message.chat.id, "Sorry, there is no KYC found to be deleted. To add, use /addmodkyc command.")
 
 # ===========================command: /setkycviewstatus===========================
-@bot.message_handler(commands=['setkycviewstatus'])
-def setkycviewstatus_command(message):
+@bot.message_handler(commands=['kycviewstatus'])
+def kycviewstatus_command(message):
 	"""
 		Show the current KYC Access Status
 		- | Change |
@@ -658,17 +659,23 @@ def setkycviewstatus_command(message):
 		else:
 			print("Sorry, there is no KYC data for the user id.")	
 	"""
-	markup = telebot.types.InlineKeyboardMarkup(row_width=1)   # 'one_time_keyboard' hides the keyboard automatically when just after pressing button
-	itembtn1 = telebot.types.InlineKeyboardButton(f'{paintbrush_emoji} Change', callback_data = "setkycviewstatus_callback")
-	markup.add(itembtn1)
+	try:
+		if r.exists(str(message.chat.id)):
+			if r.hexists(str(message.chat.id, 'view_status'))
+				view_status = r.hget(str(message.chat.id), 'view_status').decode('utf-8')
+				bot.send_message(message.chat.id, f"Your KYC View Status is set to \'{view_status}\'")
+			else:
+				markup = telebot.types.InlineKeyboardMarkup(row_width=1)
+				itembtn1 = telebot.types.InlineKeyboardButton(f'{paintbrush_emoji} Change', callback_data = "setkycviewstatus_callback")
+				markup.add(itembtn1)
+				bot.send_message(message.chat.id, "Your KYC View Status is not set yet. Please click the button below:", reply_markup= markup)
+		else:
+			bot.send_message(message.chat.id, "Sorry, there is no KYC added yet. To add, use /addmodkyc command.")
+	except redis.exceptions.ConnectionError as e:
+		bot.send_message(message.chat.id, f'Redis Database Connection Error')
 
-	bot.send_message(message.chat.id, "Please, select one option to add KYC", reply_markup= markup)
-	# try:			# for Redis DB
-
-	# except redis.exceptions.ConnectionError as e:
-	# 	bot.send_message(message.chat.id, f'Redis Database Connection Error')
-
-# ---------------------------callback: kyc_selfie------------------------------------------------------------------------------
+		
+# ---------------------------callback: kyc_selfie----------------------------------------
 @bot.callback_query_handler(func=lambda call: call.data == 'setkycviewstatus_callback')
 def setkycviewstatus_callback(call):
 	# if user_id found on the KYC blockchain:
