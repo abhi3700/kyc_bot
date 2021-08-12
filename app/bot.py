@@ -2,7 +2,7 @@ import telebot
 from telebot import types
 import redis
 import json
-import asyncio
+# import asyncio
 import time
 import os
 import base64
@@ -11,7 +11,7 @@ from Crypto.Hash import SHA256
 import json
 import binascii
 import requests
-from getpass import getpass
+# from getpass import getpass
 from datetime import datetime, timedelta
 from ueosio import sign_tx, DataStream, get_expiration, get_tapos_info, build_push_transaction_body
 
@@ -623,11 +623,11 @@ def delkyc_command(message):
 		Delete user's KYC info from this bot via Blockchain
 	"""
 	if r.exists(str(message.chat.id)):
-		res = delkyc(m.chat.id)
+		res = delkyc(message.chat.id)
 
 		# for Blockchain
 		if res.status_code == 202:
-			bot.send_message(m.chat.id, f"\nView the transaction here: https://bloks.io/transaction/{res.json()['transaction_id']}", parse_mode= 'MARKDOWN') if chain_type== "eos-mainnet" else bot.send_message(m.chat.id, f"\nView the transaction here: https://{chain_name}.bloks.io/transaction/{res.json()['transaction_id']}", parse_mode= 'MARKDOWN')          # print the txn_id for successful transaction			
+			bot.send_message(message.chat.id, f"\nView the transaction here: https://bloks.io/transaction/{res.json()['transaction_id']}", parse_mode= 'MARKDOWN') if chain_type== "eos-mainnet" else bot.send_message(message.chat.id, f"\nView the transaction here: https://{chain_name}.bloks.io/transaction/{res.json()['transaction_id']}", parse_mode= 'MARKDOWN')          # print the txn_id for successful transaction			
 			try:			# for Redis DB
 				# t_start = time.time()
 
@@ -645,7 +645,7 @@ def delkyc_command(message):
 			except redis.exceptions.ConnectionError as e:
 				bot.send_message(message.chat.id, f'Redis Database Connection Error')
 		else:
-			bot.send_message(m.chat.id, f"Sorry, there is an error related to blockchain:\n{res.json()['error']['details'][0]['message']}\nPlease contact the Bot owner {bot.owner}.")
+			bot.send_message(message.chat.id, f"Sorry, there is an error related to blockchain:\n{res.json()['error']['details'][0]['message']}\nPlease contact the Bot owner {bot.owner}.")
 
 	else:
 		bot.send_message(message.chat.id, "Sorry, there is no KYC found to be deleted. To add, use /addmodkyc command.")

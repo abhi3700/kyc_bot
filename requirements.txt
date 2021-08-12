@@ -3,3 +3,5 @@ asyncio
 aioeos
 redis
 pycryptodome
+requests
+ueosio

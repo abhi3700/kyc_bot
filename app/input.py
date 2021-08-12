@@ -1,7 +1,7 @@
 API_key = "1893739737:AAFLLNIX9oh5Ezt3P7_NQqVOgy3rhd7NsrU"
 
 # Capture using `$ heroku redis:credentials REDIS_URL -a kyctelbot` from the terminal
-REDIS_URL = 'rediss://:pdce7b386f10b7ff68380213dabfecd07d6b6bb99965c7e49e22d2a274c5aa600@ec2-52-45-192-3.compute-1.amazonaws.com:22100'
+REDIS_URL = 'rediss://:p2b482bc538e3cfe81ca93e9dc5691b2b12d4954092a836acc73dfa18989e7942@ec2-52-7-121-255.compute-1.amazonaws.com:21370'
 
 chain_api_url = 'http://jungle3.cryptolions.io:80'      # Jungle Testnet
 chain_name = 'jungle3'
