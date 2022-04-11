@@ -3,19 +3,19 @@
 * A Telegram Bot which allows a user to fill KYC on Blockchain
 
 ## Features
-* [ ] add kyc info
+* [x] add kyc info
 	- here, `/addkyc` is to show the option like this:
 ```
 | name | address | doc ID front photo |
 | doc ID back photo | selfie photo |
 ```
-* [ ] modify kyc info
+* [x] modify kyc info
 	- here, `/editkyc` is to edit any fields of KYC
 ```
 | name | address | doc ID front photo |
 | doc ID back photo | selfie photo |
 ```
-* [ ] delete kyc
+* [x] delete kyc
 	- here, `/delkyc` is to delete kyc 
 
 ## Coding

@@ -1,7 +1,13 @@
-API_key = "1893739737:AAFLLNIX9oh5Ezt3P7_NQqVOgy3rhd7NsrU"
+import os
+from dotenv import load_dotenv
+
+load_dotenv()  #  take environment variables from .env.
+
+# -------------------------------------------------------------------------------
+API_KEY = str(os.getenv('API_KEY'))
 
 # Capture using `$ heroku redis:credentials REDIS_URL -a kyctelbot` from the terminal
-REDIS_URL = 'rediss://:p2b482bc538e3cfe81ca93e9dc5691b2b12d4954092a836acc73dfa18989e7942@ec2-52-7-121-255.compute-1.amazonaws.com:21370'
+REDIS_URL = str(os.getenv('REDIS_URL'))
 
 chain_api_url = 'http://jungle3.cryptolions.io:80'      # Jungle Testnet
 chain_name = 'jungle3'
@@ -11,7 +17,7 @@ chain_type = 'eos-testnet'
 
 # kycteosiobot eosio_ac
 kyc_eosio_ac = 'kycteosiobot'
-kyc_ac_private_key = '5J5rCnpZZDywDAbpjS3VSocUyZp2GYDcR4ht5VPyFJmDAFhP7o2'
+kyc_ac_private_key = str(os.getenv('KYC_AC_PRIVATE_KEY'))
 kyc_ac_key_perm = 'active'
 
 # ACTION

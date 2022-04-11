@@ -18,7 +18,7 @@ from ueosio import sign_tx, DataStream, get_expiration, get_tapos_info, build_pu
 from input import *
 
 # --------------------About Bot--------------------------------------------------------------------
-bot= telebot.TeleBot(token= API_key, parse_mode= None)			# You can set parse_mode by default. HTML or 'MARKDOWN'
+bot= telebot.TeleBot(token= API_KEY, parse_mode= None)			# You can set parse_mode by default. HTML or 'MARKDOWN'
 bot.about = "This is a KYC Bot."
 bot.owner = "@abhi3700"
 
